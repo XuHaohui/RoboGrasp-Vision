@@ -1,0 +1,7 @@
+# Robot bridge parameters for RoboGrasp-Vision
+bridge_node:
+  ros__parameters:
+    robot_backend: "piper_control"
+    target_topic: "/target_pose"
+    target_frame: "world"
+    max_retries: 3

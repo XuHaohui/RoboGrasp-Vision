@@ -1,0 +1,7 @@
+# GraspRequest.srv — request a grasp for a specific object
+string object_class
+float32 timeout
+---
+bool success
+geometry_msgs/PoseStamped grasp_pose
+string message

@@ -1,0 +1,25 @@
+# System-level parameters for RoboGrasp-Vision
+# These apply across all nodes.
+
+system:
+  ros__parameters:
+    # Pipeline mode: "mock" (all mock), "live" (real hardware)
+    pipeline_mode: "mock"
+
+    # Robot configuration
+    robot_type: "piper"
+    use_sim_time: true
+
+    # --- Global frames ---
+    world_frame: "world"
+    base_frame: "base_link"
+    camera_frame: "camera_link"
+    ee_frame: "gripper_link"
+
+    # --- Execution ---
+    execution_timeout: 30.0
+    enable_failure_recovery: false
+    max_recovery_attempts: 3
+
+    # --- Logging ---
+    log_level: "info"

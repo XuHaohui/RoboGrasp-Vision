@@ -1,0 +1,33 @@
+# Object class configuration
+# Defines known object classes for detection and grasping.
+
+classes:
+  - name: "cube"
+    size: [0.04, 0.04, 0.04]
+    grasp_strategy: "top"
+    approach_offset: 0.10
+    grasp_width: 0.04
+
+  - name: "cylinder"
+    size: [0.04, 0.04, 0.08]
+    grasp_strategy: "top"
+    approach_offset: 0.12
+    grasp_width: 0.04
+
+  - name: "box"
+    size: [0.06, 0.06, 0.04]
+    grasp_strategy: "top"
+    approach_offset: 0.10
+    grasp_width: 0.06
+
+  - name: "sphere"
+    size: [0.05, 0.05, 0.05]
+    grasp_strategy: "top"
+    approach_offset: 0.12
+    grasp_width: 0.05
+
+fallback:
+  size: [0.04, 0.04, 0.04]
+  grasp_strategy: "top"
+  approach_offset: 0.10
+  grasp_width: 0.04
