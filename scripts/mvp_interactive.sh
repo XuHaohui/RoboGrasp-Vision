@@ -1,12 +1,4 @@
 #!/bin/bash
-# RoboGrasp-Vision 键盘交互启动脚本
-# 用法: ./scripts/mvp_interactive.sh
-#
-# 启动 mvp_demo launch，提供键盘菜单，按键触发 mock_perception 检测
-#
-# 与 piper_moveit_bridge 联用:
-#   终端1: ros2 launch piper_highlevel piper_moveit_bridge.launch.py
-#   终端2: ./scripts/mvp_interactive.sh
 
 set -e
 
@@ -39,10 +31,12 @@ echo ""
 echo "========================================"
 echo " Use keyboard to publish mock perception"
 echo "----------------------------------------"
-echo " 1: cube      (0.35,  0.05, 0.02)"
-echo " 2: cylinder  (0.35, -0.10, 0.02)"
-echo " 3: box       (0.25,  0.10, 0.02)"
-echo " q: quit & shutdown"
+echo " #  name       shape      position (x, y, z)     size (w x d x h) m"
+echo "---  --------  ---------  ---------------------  --------------------"
+echo " 1:  cube      [cube]    (0.35,  0.05, 0.20)    0.04 x 0.04 x 0.04"
+echo " 2:  cylinder  [cylinder] (0.35, -0.10, 0.20)   0.04 x 0.04 x 0.06"
+echo " 3:  box       [box]     (0.25,  0.10, 0.20)    0.05 x 0.05 x 0.05"
+echo " q:  quit & shutdown"
 echo "========================================"
 
 trap 'echo ""; echo "Shutting down..."; ros2 param set '$NODE_NAME' trigger_index 0 2>/dev/null; kill $LAUNCH_PID 2>/dev/null; wait $LAUNCH_PID 2>/dev/null; exit 0' INT TERM

@@ -1,16 +1,3 @@
-"""MVP demo launch: perception + bridge pipeline in mock mode (keyboard control).
-
-Data flow:
-    keyboard -> mock_perception -> /perception/result (camera_link)
-    -> bridge_node -> tf2 transform -> /target_pose (world)
-
-Usage:
-    ros2 launch robograsp_vision_bringup mvp_demo.launch.py
-
-Requirements:
-    - ROS2 Humble sourced
-    - Workspace built (colcon build)
-"""
 
 from launch import LaunchDescription
 from launch_ros.actions import Node

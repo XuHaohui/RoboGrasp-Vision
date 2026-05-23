@@ -12,7 +12,6 @@
   <depend>rclpy</depend>
   <depend>robograsp_interfaces</depend>
   <depend>robograsp_vision_perception</depend>
-  <depend>robograsp_vision_grasp</depend>
   <depend>robograsp_vision_bridge</depend>
 
   <test_depend>ament_copyright</test_depend>

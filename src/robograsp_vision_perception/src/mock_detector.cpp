@@ -9,9 +9,10 @@ MockDetector::MockDetector(
 {
   (void)default_object; (void)x; (void)y; (void)z;
   objects_ = {
-    {"cube",     0.35,  0.05, 0.2, 0.85f},
-    {"cylinder", 0.35, -0.10, 0.2, 0.90f},
-    {"box",      0.25,  0.10, 0.2, 0.95f},
+    // name       x     y      z    conf   bbox {宽, 深, 高}    shape
+    {"cube",     0.35,  0.05, 0.2, 0.85f, {0.04f, 0.04f, 0.04f}, "cube"},
+    {"cylinder", 0.35, -0.10, 0.2, 0.90f, {0.02f, 0.02f, 0.06f}, "cylinder"},
+    {"box",      0.25,  0.10, 0.2, 0.95f, {0.05f, 0.05f, 0.05f}, "box"},
   };
 }
 
@@ -31,7 +32,7 @@ DetectionResult MockDetector::detect()
   r.position_3d.y = obj.y;
   r.position_3d.z = obj.z;
 
-  r.bbox_size = {0.04f, 0.04f, 0.04f};
+  r.bbox_size = {obj.bbox[0], obj.bbox[1], obj.bbox[2]};
   r.bbox_2d = {100.0f, 150.0f, 80.0f, 80.0f};
 
   return r;
@@ -40,13 +41,13 @@ DetectionResult MockDetector::detect()
 DetectionResult MockDetector::detect_by_index(size_t index)
 {
   DetectionResult r;
-  r.bbox_size = {0.04f, 0.04f, 0.04f};
   r.bbox_2d = {100.0f, 150.0f, 80.0f, 80.0f};
 
   if (index >= objects_.size()) {
     r.detected = false;
     r.object_class = "unknown";
     r.confidence = 0.0f;
+    r.bbox_size = {0.0f, 0.0f, 0.0f};
     return r;
   }
 
@@ -57,6 +58,8 @@ DetectionResult MockDetector::detect_by_index(size_t index)
   r.position_3d.x = obj.x;
   r.position_3d.y = obj.y;
   r.position_3d.z = obj.z;
+
+  r.bbox_size = {obj.bbox[0], obj.bbox[1], obj.bbox[2]};
 
   return r;
 }

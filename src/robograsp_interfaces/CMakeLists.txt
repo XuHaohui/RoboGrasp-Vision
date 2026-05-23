@@ -12,12 +12,7 @@ find_package(std_msgs REQUIRED)
 
 set(msg_files
   msg/PerceptionResult.msg
-  msg/GraspCommand.msg
   msg/ObjectInfo.msg
-)
-
-set(srv_files
-  srv/GraspRequest.srv
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

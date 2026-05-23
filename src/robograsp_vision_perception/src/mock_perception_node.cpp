@@ -74,7 +74,9 @@ private:
     for (size_t i = 0; i < detector_->object_count(); ++i) {
       const auto & obj = detector_->object_at(i);
       std::cout << "  Press " << (i + 1) << ": " << obj.name
-                << " (" << obj.x << ", " << obj.y << ", " << obj.z << ")\n";
+                << " [" << obj.shape << "]"
+                << " pos(" << obj.x << ", " << obj.y << ", " << obj.z << ")"
+                << " size(" << obj.bbox[0] << "x" << obj.bbox[1] << "x" << obj.bbox[2] << ")\n";
     }
     std::cout << "  Press q: quit\n"
               << "--------------------------------\n"
@@ -82,7 +84,9 @@ private:
     for (size_t i = 0; i < detector_->object_count(); ++i) {
       const auto & obj = detector_->object_at(i);
       std::cout << "  ros2 param set /perception trigger_index "
-                << (i + 1) << "  # " << obj.name << "\n";
+                << (i + 1) << "  # " << obj.name << " [" << obj.shape << "]"
+                << " pos(" << obj.x << ", " << obj.y << ", " << obj.z << ")"
+                << " size(" << obj.bbox[0] << "x" << obj.bbox[1] << "x" << obj.bbox[2] << ")\n";
     }
     std::cout << "================================\n"
               << "> " << std::flush;

@@ -1,7 +1,0 @@
-# Grasp generation parameters for RoboGrasp-Vision
-grasp_node:
-  ros__parameters:
-    approach_offset: 0.10
-    grasp_width: 0.04
-    world_frame: "world"
-    min_confidence: 0.5
