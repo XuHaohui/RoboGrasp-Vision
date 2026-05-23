@@ -1,18 +1,3 @@
-"""Full demo launch: perception + bridge pipeline.
-
-This is the primary launch file for the RoboGrasp-Vision system.
-It starts perception and bridge nodes with TF frame transform.
-
-Node topology:
-    mock_perception  --/perception/result-->  bridge_node
-         (camera_link)                            │ tf2: camera_link -> world
-                                                  ▼
-                                            /target_pose (world)
-
-Usage:
-    ros2 launch robograsp_vision_bringup demo.launch.py
-    ros2 launch robograsp_vision_bringup demo.launch.py use_mock:=false
-"""
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, TimerAction
@@ -52,7 +37,6 @@ def generate_launch_description():
         executable="mock_perception",
         name="perception",
         output="screen",
-        prefix="xterm -e",
         parameters=[{
             "use_mock": LaunchConfiguration("use_mock"),
         }],

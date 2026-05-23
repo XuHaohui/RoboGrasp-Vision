@@ -9,9 +9,9 @@ MockDetector::MockDetector(
 {
   (void)default_object; (void)x; (void)y; (void)z;
   objects_ = {
-    {"cube",     0.35,  0.05, 0.02, 0.85f},
-    {"cylinder", 0.35, -0.10, 0.02, 0.90f},
-    {"box",      0.25,  0.10, 0.02, 0.95f},
+    {"cube",     0.35,  0.05, 0.2, 0.85f},
+    {"cylinder", 0.35, -0.10, 0.2, 0.90f},
+    {"box",      0.25,  0.10, 0.2, 0.95f},
   };
 }
 

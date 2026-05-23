@@ -34,7 +34,6 @@ def generate_launch_description():
         executable="mock_perception",
         name="mock_perception",
         output="screen",
-        prefix="xterm -e",
         parameters=[{
             "sensor_frame": "camera_link",
         }],
