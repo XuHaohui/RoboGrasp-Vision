@@ -21,9 +21,20 @@ fi
 
 # Optional: use CycloneDDS for better communication
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export CYCLONEDDS_URI="file://$HOME/piper_conrtrol/scripts/cyclonedds.xml"
 
 # Recommended locale setting
 export LC_NUMERIC=en_US.UTF-8
+
+# Workaround: bypass broken ROS 2 daemon (Python 3.10 importlib.metadata bug)
+ros2() {
+    case "$1" in
+        topic|node|service|param|action|interface|pkg|lifecycle|bag)
+            command ros2 "$@" --no-daemon ;;
+        *)
+            command ros2 "$@" ;;
+    esac
+}
 
 echo "RoboGrasp-Vision workspace loaded"
 echo "  ROS_DISTRO=$ROS_DISTRO"

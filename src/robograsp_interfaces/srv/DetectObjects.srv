@@ -1,0 +1,4 @@
+# DetectObjects.srv — request: empty, response: array of perception results
+std_msgs/Header header
+---
+robograsp_interfaces/PerceptionResult[] results

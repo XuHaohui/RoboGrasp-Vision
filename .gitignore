@@ -6,3 +6,5 @@ __pycache__/
 *.pyo
 .nexus/
 .vibe/
+.opencode/
+TODO.md

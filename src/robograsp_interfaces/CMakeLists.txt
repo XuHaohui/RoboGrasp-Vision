@@ -15,6 +15,10 @@ set(msg_files
   msg/ObjectInfo.msg
 )
 
+set(srv_files
+  srv/DetectObjects.srv
+)
+
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
   ${srv_files}

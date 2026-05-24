@@ -38,6 +38,24 @@ DetectionResult MockDetector::detect()
   return r;
 }
 
+std::vector<DetectionResult> MockDetector::detect_all()
+{
+  std::vector<DetectionResult> results;
+  for (const auto & obj : objects_) {
+    DetectionResult r;
+    r.detected = true;
+    r.object_class = obj.name;
+    r.confidence = obj.confidence;
+    r.position_3d.x = obj.x;
+    r.position_3d.y = obj.y;
+    r.position_3d.z = obj.z;
+    r.bbox_size = {obj.bbox[0], obj.bbox[1], obj.bbox[2]};
+    r.bbox_2d = {100.0f, 150.0f, 80.0f, 80.0f};
+    results.push_back(r);
+  }
+  return results;
+}
+
 DetectionResult MockDetector::detect_by_index(size_t index)
 {
   DetectionResult r;

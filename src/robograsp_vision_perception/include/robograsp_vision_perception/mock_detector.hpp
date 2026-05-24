@@ -17,6 +17,8 @@ public:
 
   DetectionResult detect() override;
 
+  std::vector<DetectionResult> detect_all() override;
+
   struct ObjectDef
   {
     std::string name;               // 物体类别名 (e.g. "cube", "cylinder")

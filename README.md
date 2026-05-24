@@ -28,7 +28,9 @@ RoboGrasp-Vision/
 ├── .gitignore
 ├── scripts/
 │   ├── setup_env.sh                   # 环境加载脚本
-│   └── mvp_interactive.sh             # 一键键盘交互启动脚本
+│   ├── mvp_interactive.sh             # Mock 键盘交互启动脚本
+│   ├── camera_interactive.sh          # Camera 检测交互启动脚本
+│   └── camera_interactive.py          # Camera 检测交互控制
 └── src/
     ├── robograsp_interfaces/          # 自定义 ROS2 消息/服务接口
     │   ├── msg/
@@ -134,6 +136,23 @@ source scripts/setup_env.sh
  q:  quit & shutdown
 > 
 ```
+
+### 运行 Camera Detection
+
+```bash
+# 摄像头检测交互启动
+# 使用真实相机（或 Realsense 仿真）进行物体检测
+# 启动后通过键盘交互触发检测和抓取
+./scripts/camera_interactive.sh
+```
+
+此脚本会依次：
+1. 加载环境变量
+2. 启动 `camera_detect.launch.py`（摄像头检测管线）
+3. 运行 `camera_interactive.py`（键盘交互控制）
+4. 退出时自动关闭所有节点
+
+> **注意**：使用 `./scripts/camera_interactive.sh`（而非 `ros2 launch`）启动，以保证键盘输入能正确传递给交互控制脚本。
 
 ### 与 RoboGrasp-Pipeline 联合运行
 
