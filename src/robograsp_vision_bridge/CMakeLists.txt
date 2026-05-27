@@ -11,9 +11,6 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(robograsp_interfaces REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(tf2_ros REQUIRED)
-find_package(tf2_geometry_msgs REQUIRED)
 
 # piper_control_interface library
 add_library(piper_control_interface SHARED
@@ -23,7 +20,7 @@ target_include_directories(piper_control_interface PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
-ament_target_dependencies(piper_control_interface rclcpp geometry_msgs robograsp_interfaces tf2 tf2_ros tf2_geometry_msgs)
+ament_target_dependencies(piper_control_interface rclcpp geometry_msgs robograsp_interfaces)
 
 # bridge_node executable
 add_executable(bridge_node
@@ -34,7 +31,7 @@ target_include_directories(bridge_node PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(bridge_node piper_control_interface)
-ament_target_dependencies(bridge_node rclcpp robograsp_interfaces geometry_msgs std_msgs tf2 tf2_ros tf2_geometry_msgs)
+ament_target_dependencies(bridge_node rclcpp robograsp_interfaces geometry_msgs std_msgs)
 
 # install targets
 install(TARGETS

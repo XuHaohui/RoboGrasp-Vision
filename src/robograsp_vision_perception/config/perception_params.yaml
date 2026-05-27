@@ -2,3 +2,4 @@
 perception_node:
   ros__parameters:
     sensor_frame: "camera_depth_optical_frame"
+    target_frame: "world"

@@ -7,6 +7,11 @@
 
 #include "robograsp_vision_perception/camera_detector.hpp"
 
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <geometry_msgs/msg/point_stamped.hpp>
+
 using namespace std::chrono_literals;
 
 class PerceptionNode : public rclcpp::Node
@@ -17,13 +22,18 @@ public:
   {
     declare_parameter("publish_rate", 5.0);
     declare_parameter("sensor_frame", "camera_depth_optical_frame");
+    declare_parameter("target_frame", "world");
     declare_parameter("auto_publish", false);
 
     publish_rate_ = get_parameter("publish_rate").as_double();
     sensor_frame_ = get_parameter("sensor_frame").as_string();
+    target_frame_ = get_parameter("target_frame").as_string();
     bool auto_publish = get_parameter("auto_publish").as_bool();
 
     detector_ = std::make_shared<robograsp_vision_perception::ColorThresholdDetector>(this);
+
+    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(get_clock());
+    tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_);
 
     publisher_ = create_publisher<robograsp_interfaces::msg::PerceptionResult>(
       "/perception/result", 10);
@@ -40,28 +50,50 @@ public:
     }
 
     RCLCPP_INFO(get_logger(),
-      "PerceptionNode started (auto_publish=%s)",
-      auto_publish ? "true" : "false");
+      "PerceptionNode started (auto_publish=%s, target_frame=%s)",
+      auto_publish ? "true" : "false",
+      target_frame_.c_str());
   }
 
 private:
+  geometry_msgs::msg::Point transform_position(
+    const geometry_msgs::msg::Point & point_in_camera,
+    const rclcpp::Time & stamp)
+  {
+    geometry_msgs::msg::PointStamped point_in;
+    point_in.header.frame_id = sensor_frame_;
+    point_in.header.stamp = stamp;
+    point_in.point = point_in_camera;
+
+    try {
+      auto point_out = tf_buffer_->transform(point_in, target_frame_);
+      return point_out.point;
+    } catch (const tf2::TransformException & ex) {
+      RCLCPP_WARN(get_logger(),
+        "TF from '%s' to '%s' failed: %s. Using camera-frame coordinates.",
+        sensor_frame_.c_str(), target_frame_.c_str(), ex.what());
+      return point_in_camera;
+    }
+  }
+
   void detect_cb(
     const std::shared_ptr<robograsp_interfaces::srv::DetectObjects::Request> /*req*/,
     std::shared_ptr<robograsp_interfaces::srv::DetectObjects::Response> res)
   {
     auto detections = detector_->detect_all();
+    auto stamp = now();
 
     for (const auto & det : detections) {
       if (!det.detected) continue;
 
+      auto world_pos = transform_position(det.position_3d, stamp);
+
       robograsp_interfaces::msg::PerceptionResult msg;
-      msg.header.stamp = now();
-      msg.header.frame_id = sensor_frame_;
+      msg.header.stamp = stamp;
+      msg.header.frame_id = target_frame_;
       msg.object_class = det.object_class;
       msg.confidence = det.confidence;
-      msg.position.x = det.position_3d.x;
-      msg.position.y = det.position_3d.y;
-      msg.position.z = det.position_3d.z;
+      msg.position = world_pos;
       msg.bbox_size = det.bbox_size;
       msg.bbox_2d = det.bbox_2d;
       msg.sensor_frame = sensor_frame_;
@@ -82,16 +114,15 @@ private:
       return;
     }
 
+    auto stamp = now();
+    auto world_pos = transform_position(det.position_3d, stamp);
+
     robograsp_interfaces::msg::PerceptionResult msg;
-    msg.header.stamp = now();
-    msg.header.frame_id = sensor_frame_;
+    msg.header.stamp = stamp;
+    msg.header.frame_id = target_frame_;
     msg.object_class = det.object_class;
     msg.confidence = det.confidence;
-
-    msg.position.x = det.position_3d.x;
-    msg.position.y = det.position_3d.y;
-    msg.position.z = det.position_3d.z;
-
+    msg.position = world_pos;
     msg.bbox_size = det.bbox_size;
     msg.bbox_2d = det.bbox_2d;
     msg.sensor_frame = sensor_frame_;
@@ -106,6 +137,9 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   double publish_rate_;
   std::string sensor_frame_;
+  std::string target_frame_;
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::unique_ptr<tf2_ros::TransformListener> tf_listener_;
 };
 
 int main(int argc, char ** argv)

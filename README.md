@@ -52,8 +52,8 @@ RoboGrasp-Vision/
 
 | 模块 | 职责 | 输入 | 输出 |
 |------|------|------|------|
-| **perception** | 物体检测、3D 定位 | 相机/参数触发 | `PerceptionResult` |
-| **bridge** | 坐标变换、指令转发、后端适配 | `PerceptionResult` | `/target_pose` (ObjectInfo) |
+| **perception** | 物体检测、3D 定位、坐标系变换 | 相机/参数触发 (sensor frame) | `PerceptionResult` (world frame) |
+| **bridge** | 指令转发、机器人后端适配 | `PerceptionResult` (world frame) | `/target_pose` (ObjectInfo, world frame) |
 | **bringup** | 统一启动入口、参数管理 | — | launch 文件 |
 
 ### 关键设计决策
@@ -61,6 +61,7 @@ RoboGrasp-Vision/
 - **接口优先**：各层通过自定义 ROS2 消息松耦合，可独立替换
 - **抽象基类**：detector、robot_interface 均为 ABC，支持多后端
 - **C++ 为主**：感知、桥接层均使用 C++ (rclcpp)，与 piper_control 语言栈一致
+- **感知层做 TF**：反投影结果拿到后立即 TF 变换到 world 系，后续 service → topic → 终端 → bridge 全链路统一语义，无坐标系断层
 
 ## 快速开始
 
@@ -123,7 +124,7 @@ ros2 run rqt_graph rqt_graph
 
 ## 与 RoboGrasp-Pipeline 的关系
 
-- **RoboGrasp-Vision = 感知层**（Python，快速研究迭代）
+- **RoboGrasp-Vision = 感知层**（C++/rclcpp，快速研究迭代）
 - **RoboGrasp-Pipeline = 执行层**（C++/MoveIt2，稳定操作基座）
 - 通过 `/target_pose` 话题解耦，可独立开发、测试、替换
 
@@ -143,7 +144,8 @@ ros2 run rqt_graph rqt_graph
 ### 添加新的感知后端
 
 1. 实现 `ObjectDetector` 子类（参见 `detector.hpp`），在 `detect()` / `detect_by_index()` 中填充 `DetectionResult`（包括 `bbox_size`）
-2. 真实相机后端直接替换检测器即可，下游无需改动
+2. 确保 `PerceptionNode` 已通过 TF 将 `position_3d` 从 `sensor_frame` 变换到 `target_frame`（参见 `transform_position()`），下游所有节点依赖 world 系语义
+3. 真实相机后端直接替换检测器即可，下游无需改动
 
 ### 添加新的机器人后端
 

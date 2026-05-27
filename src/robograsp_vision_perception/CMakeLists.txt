@@ -14,6 +14,10 @@ find_package(robograsp_interfaces REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 # camera_detector library
 add_library(camera_detector SHARED
@@ -34,7 +38,7 @@ target_include_directories(perception_node PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(perception_node camera_detector)
-ament_target_dependencies(perception_node rclcpp robograsp_interfaces geometry_msgs std_msgs)
+ament_target_dependencies(perception_node rclcpp robograsp_interfaces geometry_msgs std_msgs tf2 tf2_ros tf2_geometry_msgs)
 
 # install targets
 install(TARGETS
