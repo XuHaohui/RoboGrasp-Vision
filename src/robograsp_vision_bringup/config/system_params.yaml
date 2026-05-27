@@ -3,9 +3,6 @@
 
 system:
   ros__parameters:
-    # Pipeline mode: "mock" (all mock), "live" (real hardware)
-    pipeline_mode: "mock"
-
     # Robot configuration
     robot_type: "piper"
     use_sim_time: true
@@ -13,7 +10,7 @@ system:
     # --- Global frames ---
     world_frame: "world"
     base_frame: "base_link"
-    camera_frame: "camera_link"
+    camera_frame: "camera_depth_optical_frame"
     ee_frame: "gripper_link"
 
     # --- Execution ---

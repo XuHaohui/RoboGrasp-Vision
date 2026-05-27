@@ -49,7 +49,11 @@ private:
   bool has_depth_{false};
   bool has_cinfo_{false};
 
-  rclcpp::Time latest_stamp_;
+  rclcpp::Time latest_rgb_stamp_;
+  rclcpp::Time latest_depth_stamp_;
+  rclcpp::Time latest_cinfo_stamp_;
+
+  double stale_timeout_{1.0};
 };
 
 class ColorThresholdDetector : public CameraDetector

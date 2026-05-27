@@ -10,10 +10,6 @@ def generate_launch_description():
 
     # -- Launch arguments --
     ld.add_action(DeclareLaunchArgument(
-        "use_mock", default_value="true",
-        description="Use mock perception (true) or real camera (false)"
-    ))
-    ld.add_action(DeclareLaunchArgument(
         "target_topic", default_value="/target_pose",
         description="Target topic for object info"
     ))
@@ -22,23 +18,23 @@ def generate_launch_description():
         description="Target frame for output coordinates"
     ))
 
-    # -- Static TF: world -> camera_link (identity) --
+    # -- Static TF: world -> camera_depth_optical_frame (camera at 0.4, 0, 1.2, looking down) --
     static_tf = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
         name="static_world_to_camera",
         output="screen",
-        arguments=["0", "0", "0", "0", "0", "0", "1", "world", "camera_link"],
+        arguments=["0.4", "0", "1.2", "1", "0", "0", "0", "world", "camera_depth_optical_frame"],
     )
 
-    # -- Perception node (keyboard mode) --
+    # -- Perception node --
     perception_node = Node(
         package="robograsp_vision_perception",
-        executable="mock_perception",
+        executable="perception_node",
         name="perception",
         output="screen",
         parameters=[{
-            "use_mock": LaunchConfiguration("use_mock"),
+            "sensor_frame": "camera_depth_optical_frame",
         }],
     )
 

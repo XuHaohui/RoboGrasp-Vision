@@ -30,9 +30,30 @@ bool PiperControlInterface::send_object_info(
   msg.confidence = perception.confidence;
   msg.bbox_size = perception.bbox_size;
 
+  const bool bbox_invalid = (msg.bbox_size[0] <= 0.0f ||
+                             msg.bbox_size[1] <= 0.0f ||
+                             msg.bbox_size[2] <= 0.0f);
+  if (bbox_invalid) {
+    if (perception.object_class == "cube") {
+      msg.bbox_size = {0.04f, 0.04f, 0.04f};
+    } else if (perception.object_class == "cylinder") {
+      msg.bbox_size = {0.07f, 0.07f, 0.08f};
+    } else if (perception.object_class == "box") {
+      msg.bbox_size = {0.05f, 0.05f, 0.05f};
+    } else if (perception.object_class == "sphere") {
+      msg.bbox_size = {0.04f, 0.04f, 0.04f};
+    } else {
+      msg.bbox_size = {0.04f, 0.04f, 0.04f};
+    }
+    RCLCPP_WARN(node_->get_logger(),
+      "bbox_size from perception [%.2f, %.2f, %.2f] is invalid for '%s', using defaults",
+      perception.bbox_size[0], perception.bbox_size[1], perception.bbox_size[2],
+      perception.object_class.c_str());
+  }
+
   std::string src_frame = perception.header.frame_id;
   if (src_frame.empty()) {
-    src_frame = "camera_link";
+    src_frame = "camera_depth_optical_frame";
   }
 
   geometry_msgs::msg::PointStamped point_in;
@@ -49,8 +70,11 @@ bool PiperControlInterface::send_object_info(
     resolved_frame = target_frame_;
   } catch (const tf2::TransformException & ex) {
     RCLCPP_WARN(node_->get_logger(),
-      "TF from '%s' to '%s' unavailable: %s. Using original coordinates.",
-      src_frame.c_str(), target_frame_.c_str(), ex.what());
+      "TF from '%s' to '%s' unavailable: %s. "
+      "Falling back to raw camera coordinates (%.3f, %.3f, %.3f) — "
+      "positions may be incorrect. Ensure static TF publisher is running.",
+      src_frame.c_str(), target_frame_.c_str(), ex.what(),
+      perception.position.x, perception.position.y, perception.position.z);
     transformed_point = perception.position;
   }
 

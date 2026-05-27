@@ -42,6 +42,13 @@ private:
   {
     last_perception_ = *msg;
 
+    if (msg->status != "detected") {
+      RCLCPP_DEBUG(get_logger(),
+        "Skipping perception '%s' with status '%s'",
+        msg->object_class.c_str(), msg->status.c_str());
+      return;
+    }
+
     if (!robot_->is_ready()) {
       RCLCPP_WARN(get_logger(),
         "Robot not ready, dropping perception for '%s'",

@@ -12,7 +12,7 @@ def generate_launch_description():
         executable="static_transform_publisher",
         name="static_world_to_camera",
         output="screen",
-        arguments=["0", "0", "0", "0", "0", "0", "1", "world", "camera_link"],
+        arguments=["0.4", "0", "1.2", "1", "0", "0", "0", "world", "camera_depth_optical_frame"],
     )
 
     perception_node = Node(
@@ -21,9 +21,8 @@ def generate_launch_description():
         name="perception",
         output="screen",
         parameters=[{
-            "use_mock": False,
             "auto_publish": False,
-            "sensor_frame": "camera_link",
+            "sensor_frame": "camera_depth_optical_frame",
             "publish_rate": 5.0,
         }],
     )

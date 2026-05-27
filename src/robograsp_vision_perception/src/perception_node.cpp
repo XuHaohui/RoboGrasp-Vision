@@ -5,7 +5,6 @@
 #include "robograsp_interfaces/msg/perception_result.hpp"
 #include "robograsp_interfaces/srv/detect_objects.hpp"
 
-#include "robograsp_vision_perception/mock_detector.hpp"
 #include "robograsp_vision_perception/camera_detector.hpp"
 
 using namespace std::chrono_literals;
@@ -17,20 +16,14 @@ public:
   : Node("perception_node")
   {
     declare_parameter("publish_rate", 5.0);
-    declare_parameter("sensor_frame", "camera_link");
-    declare_parameter("use_mock", true);
+    declare_parameter("sensor_frame", "camera_depth_optical_frame");
     declare_parameter("auto_publish", false);
 
     publish_rate_ = get_parameter("publish_rate").as_double();
     sensor_frame_ = get_parameter("sensor_frame").as_string();
-    bool use_mock = get_parameter("use_mock").as_bool();
     bool auto_publish = get_parameter("auto_publish").as_bool();
 
-    if (use_mock) {
-      detector_ = std::make_shared<robograsp_vision_perception::MockDetector>();
-    } else {
-      detector_ = std::make_shared<robograsp_vision_perception::ColorThresholdDetector>(this);
-    }
+    detector_ = std::make_shared<robograsp_vision_perception::ColorThresholdDetector>(this);
 
     publisher_ = create_publisher<robograsp_interfaces::msg::PerceptionResult>(
       "/perception/result", 10);
@@ -47,9 +40,8 @@ public:
     }
 
     RCLCPP_INFO(get_logger(),
-      "PerceptionNode started (auto_publish=%s, use_mock=%s)",
-      auto_publish ? "true" : "false",
-      use_mock ? "true" : "false");
+      "PerceptionNode started (auto_publish=%s)",
+      auto_publish ? "true" : "false");
   }
 
 private:
@@ -86,6 +78,10 @@ private:
   {
     auto det = detector_->detect();
 
+    if (!det.detected) {
+      return;
+    }
+
     robograsp_interfaces::msg::PerceptionResult msg;
     msg.header.stamp = now();
     msg.header.frame_id = sensor_frame_;
@@ -99,7 +95,7 @@ private:
     msg.bbox_size = det.bbox_size;
     msg.bbox_2d = det.bbox_2d;
     msg.sensor_frame = sensor_frame_;
-    msg.status = det.detected ? "detected" : "lost";
+    msg.status = "detected";
 
     publisher_->publish(msg);
   }

@@ -6,23 +6,23 @@ from launch_ros.actions import Node
 def generate_launch_description():
     ld = LaunchDescription()
 
-    # -- Static TF: world -> camera_link (identity) --
+    # -- Static TF: world -> camera_depth_optical_frame (camera at 0.4, 0, 1.2, looking down) --
     static_tf = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
         name="static_world_to_camera",
         output="screen",
-        arguments=["0", "0", "0", "0", "0", "0", "1", "world", "camera_link"],
+        arguments=["0.4", "0", "1.2", "1", "0", "0", "0", "world", "camera_depth_optical_frame"],
     )
 
-    # -- Mock Perception node (keyboard mode) --
-    mock_perception_node = Node(
+    # -- Perception node --
+    perception_node = Node(
         package="robograsp_vision_perception",
-        executable="mock_perception",
-        name="mock_perception",
+        executable="perception_node",
+        name="perception",
         output="screen",
         parameters=[{
-            "sensor_frame": "camera_link",
+            "sensor_frame": "camera_depth_optical_frame",
         }],
     )
 
@@ -40,7 +40,7 @@ def generate_launch_description():
     )
 
     ld.add_action(static_tf)
-    ld.add_action(mock_perception_node)
+    ld.add_action(perception_node)
     ld.add_action(bridge_node)
 
     return ld

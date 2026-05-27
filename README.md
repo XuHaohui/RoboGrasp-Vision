@@ -6,20 +6,6 @@ RoboGrasp-Vision 是一个**以 C++ 为主**的模块化机器人视觉抓取系
 
 主要开发语言：**C++ (rclcpp + ament_cmake)**，launch 文件使用 Python。
 
-```
-+------------------+                         +------------------+
-|   Perception     | ──────────────────────> |   Robot Bridge   |
-| (object detect,  |                         | (command relay)  |
-|  3D localization)|                         |                  |
-+------------------+                         +--------+---------+
-        |                                               |
-        v                                               v
-+------------------------+                +------------------------+
-|   Sensor Input (mock   |                | RoboGrasp-Pipeline     |
-|   or real RGB-D)       |                | (piper_control FSM)    |
-+------------------------+                +------------------------+
-```
-
 ## 目录结构
 
 ```
@@ -28,7 +14,6 @@ RoboGrasp-Vision/
 ├── .gitignore
 ├── scripts/
 │   ├── setup_env.sh                   # 环境加载脚本
-│   ├── mvp_interactive.sh             # Mock 键盘交互启动脚本
 │   ├── camera_interactive.sh          # Camera 检测交互启动脚本
 │   └── camera_interactive.py          # Camera 检测交互控制
 └── src/
@@ -38,9 +23,8 @@ RoboGrasp-Vision/
     │   │   └── ObjectInfo.msg         # 物体信息（桥接输出）
     │
     ├── robograsp_vision_perception/   # 感知层
-    │   ├── mock_perception_node.cpp   # Mock 感知节点（键盘/参数触发）
-    │   ├── mock_detector.cpp          # Mock 检测器（集中管理物体数据）
     │   ├── perception_node.cpp        # 主感知节点
+    │   ├── camera_detector.cpp        # 相机颜色阈值检测器
     │   ├── detector.hpp               # 检测器抽象基类
     │   └── config/
     │       └── perception_params.yaml
@@ -64,31 +48,11 @@ RoboGrasp-Vision/
 
 ## 系统架构
 
-### 数据流 (MVP)
-
-```
-[键盘/param]                          [bridge_node]                     [piper_control]
-     │                                     │                                  │
-     ▼                                     ▼                                  │
-[mock_perception]  ──PerceptionResult──►  tf2变换 + ObjectInfo  ──►  /target_pose
-     │                                     │                                  │
-     │  ObjectDetector                    │  PiperControlInterface           │
-     │  └─ MockDetector                   │  └─ send_object_info()           │
-     │     └─ objects_                    │     └─ publish(ObjectInfo)       │
-     │        {name, x,y,z,               │                                  │
-     │         bbox, shape,                │                                  │
-     │         confidence}                 ▼                                  │
-     ▼                              ┌─────────────┐                    ┌──────▼──────┐
-  /perception/result                │  bridge_node │                    │ MoveIt2 FSM │
-                                    └─────────────┘                    │ (Pick&Place)│
-                                                                       └─────────────┘
-```
-
 ### 模块职责
 
 | 模块 | 职责 | 输入 | 输出 |
 |------|------|------|------|
-| **perception** | 物体检测、3D 定位 | 键盘/参数触发 (或相机) | `PerceptionResult` |
+| **perception** | 物体检测、3D 定位 | 相机/参数触发 | `PerceptionResult` |
 | **bridge** | 坐标变换、指令转发、后端适配 | `PerceptionResult` | `/target_pose` (ObjectInfo) |
 | **bringup** | 统一启动入口、参数管理 | — | launch 文件 |
 
@@ -96,7 +60,6 @@ RoboGrasp-Vision/
 
 - **接口优先**：各层通过自定义 ROS2 消息松耦合，可独立替换
 - **抽象基类**：detector、robot_interface 均为 ABC，支持多后端
-- **Mock 先行**：MVP 阶段全 mock 数据，零硬件依赖即可运行完整数据流
 - **C++ 为主**：感知、桥接层均使用 C++ (rclcpp)，与 piper_control 语言栈一致
 
 ## 快速开始
@@ -114,27 +77,6 @@ cd RoboGrasp-Vision
 source /opt/ros/humble/setup.bash
 colcon build --symlink-install
 source scripts/setup_env.sh
-```
-
-### 运行 MVP Demo
-
-```bash
-# 一键键盘交互启动（推荐）
-# 启动后按 1/2/3 触发对应物体的模拟检测，按 q 退出
-./scripts/mvp_interactive.sh
-```
-
-菜单示例：
-
-```
-========================================
- #  name       shape      position (x, y, z)     size (w x d x h) m
----  --------  ---------  ---------------------  --------------------
- 1:  cube      [cube]    (0.35,  0.05, 0.20)    0.04 x 0.04 x 0.04
- 2:  cylinder  [cylinder] (0.35, -0.10, 0.20)   0.04 x 0.04 x 0.06
- 3:  box       [box]     (0.25,  0.10, 0.20)    0.05 x 0.05 x 0.05
- q:  quit & shutdown
-> 
 ```
 
 ### 运行 Camera Detection
@@ -162,17 +104,11 @@ cd ../piper_conrtrol
 source scripts/setup_env.sh
 ros2 launch piper_highlevel piper_moveit_bridge.launch.py
 
-# 终端 2: 启动 Vision Pipeline（键盘交互）
+# 终端 2: 启动 Vision Pipeline
 cd ../RoboGrasp-Vision
 source scripts/setup_env.sh
-./scripts/mvp_interactive.sh
-
-# 在终端 2 按 1/2/3 触发模拟检测，
-# 终端 1 的 piper_control FSM 会自动执行完整的 pick-and-place
+./scripts/camera_interactive.sh
 ```
-
-> **注意**：`ros2 launch` 方式下键盘输入无法传递给 `mock_perception` 节点，
-> 请使用 `./scripts/mvp_interactive.sh` 或 `ros2 run robograsp_vision_perception mock_perception`。
 
 ### 调试
 
@@ -181,44 +117,11 @@ source scripts/setup_env.sh
 ros2 topic echo /perception/result
 ros2 topic echo /target_pose
 
-# 用参数直接触发检测（不依赖键盘）
-ros2 param set /mock_perception trigger_index 2
-
-# 手动发布 mock 检测（直接运行节点）
-ros2 run robograsp_vision_perception mock_perception
-
 # 查看节点图
 ros2 run rqt_graph rqt_graph
 ```
 
 ## 与 RoboGrasp-Pipeline 的关系
-
-```
-RoboGrasp-Vision (本仓库)         RoboGrasp-Pipeline (piper_control)
-┌─────────────────────────┐      ┌──────────────────────────────┐
-│  Perception Layer       │      │                              │
-│  ┌───────────────────┐  │      │  ┌────────────────────────┐  │
-│  │ Object Detection  │  │      │  │  MoveIt2 FSM           │  │
-│  │ 3D Localization   │  │      │  │  (Pick & Place)        │  │
-│  └────────┬──────────┘  │      │  └──────────▲─────────────┘  │
-│           │             │      │             │                │
-│  ┌────────▼──────────┐  │      │  ┌──────────┴─────────────┐  │
-│  │ Robot Bridge      ├──┼──────┼──► /target_pose              │
-│  └───────────────────┘  │      │             │                │
-│                         │      │  ┌──────────┴─────────────┐  │
-│  Research / Perception  │      │  │  Motion Planning       │  │
-│  (Python, fast iterate) │      │  │  (MoveIt + OMPL)       │  │
-│                         │      │  └──────────▲─────────────┘  │
-│                         │      │             │                │
-│                         │      │  ┌──────────┴─────────────┐  │
-│                         │      │  │  Hardware Driver        │  │
-│                         │      │  │  (piper_ros, CAN)      │  │
-└─────────────────────────┘      │  └────────────────────────┘  │
-                                 │                              │
-                                 │  Manipulation / Execution    │
-                                 │  (C++, MoveIt2)              │
-                                 └──────────────────────────────┘
-```
 
 - **RoboGrasp-Vision = 感知层**（Python，快速研究迭代）
 - **RoboGrasp-Pipeline = 执行层**（C++/MoveIt2，稳定操作基座）
@@ -240,8 +143,7 @@ RoboGrasp-Vision (本仓库)         RoboGrasp-Pipeline (piper_control)
 ### 添加新的感知后端
 
 1. 实现 `ObjectDetector` 子类（参见 `detector.hpp`），在 `detect()` / `detect_by_index()` 中填充 `DetectionResult`（包括 `bbox_size`）
-2. 修改 `MockDetector::objects_` 中的数据即可修改模拟物体的位置、尺寸、形状
-3. 真实相机后端直接替换检测器即可，下游无需改动
+2. 真实相机后端直接替换检测器即可，下游无需改动
 
 ### 添加新的机器人后端
 

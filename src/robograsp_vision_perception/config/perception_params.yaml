@@ -1,9 +1,4 @@
 # Perception parameters for RoboGrasp-Vision
 perception_node:
   ros__parameters:
-    sensor_frame: "camera_link"
-    use_mock: true
-
-mock_perception:
-  ros__parameters:
-    sensor_frame: "camera_link"
+    sensor_frame: "camera_depth_optical_frame"

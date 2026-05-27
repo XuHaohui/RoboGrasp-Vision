@@ -1,16 +1,6 @@
 # Camera parameter presets
 # Defines intrinsic and extrinsic parameters for supported cameras.
 
-default:
-  camera_model: "mock"
-  width: 640
-  height: 480
-  fx: 525.0
-  fy: 525.0
-  cx: 319.5
-  cy: 239.5
-  depth_scale: 0.001
-
 realsense_d435:
   camera_model: "realsense_d435"
   width: 640
