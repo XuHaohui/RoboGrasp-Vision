@@ -49,7 +49,7 @@ bool PiperControlInterface::send_object_info(
   msg.header.frame_id = target_frame_;
   msg.bottom_center.x = perception.position.x;
   msg.bottom_center.y = perception.position.y;
-  msg.bottom_center.z = perception.position.z - perception.bbox_size[2] / 2.0f;
+  msg.bottom_center.z = perception.position.z - perception.bbox_size[2];
 
   publisher_->publish(msg);
 

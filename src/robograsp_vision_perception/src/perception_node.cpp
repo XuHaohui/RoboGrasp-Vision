@@ -6,6 +6,7 @@
 #include "robograsp_interfaces/srv/detect_objects.hpp"
 
 #include "robograsp_vision_perception/camera_detector.hpp"
+#include "robograsp_vision_perception/depth_geometry_detector.hpp"
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -24,13 +25,19 @@ public:
     declare_parameter("sensor_frame", "camera_depth_optical_frame");
     declare_parameter("target_frame", "world");
     declare_parameter("auto_publish", false);
+    declare_parameter("detector_backend", "color_threshold");
 
     publish_rate_ = get_parameter("publish_rate").as_double();
     sensor_frame_ = get_parameter("sensor_frame").as_string();
     target_frame_ = get_parameter("target_frame").as_string();
     bool auto_publish = get_parameter("auto_publish").as_bool();
+    std::string detector_backend = get_parameter("detector_backend").as_string();
 
-    detector_ = std::make_shared<robograsp_vision_perception::ColorThresholdDetector>(this);
+    if (detector_backend == "depth_geometry") {
+      detector_ = std::make_shared<robograsp_vision_perception::DepthFirstGeometricDetector>(this);
+    } else {
+      detector_ = std::make_shared<robograsp_vision_perception::ColorThresholdDetector>(this);
+    }
 
     tf_buffer_ = std::make_unique<tf2_ros::Buffer>(get_clock());
     tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_);

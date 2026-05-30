@@ -1,50 +1,12 @@
 # RoboGrasp-Vision
 
+⚠本仓库仍在开发阶段，目前功能仍没有完全完善，详情可见更新日志模块
+
 **视觉驱动自主抓取研究平台**
 
 RoboGrasp-Vision 是一个**以 C++ 为主**的模块化机器人视觉抓取系统，在 [RoboGrasp-Pipeline (piper_control)](../piper_conrtrol) 的底层操作能力之上，增加感知层与自主决策层，让机器人能够"看见物体 → 估计位置 → 生成抓取指令 → 调用底层执行"。
 
 主要开发语言：**C++ (rclcpp + ament_cmake)**，launch 文件使用 Python。
-
-## 目录结构
-
-```
-RoboGrasp-Vision/
-├── README.md                          # 本文件
-├── .gitignore
-├── scripts/
-│   ├── setup_env.sh                   # 环境加载脚本
-│   ├── camera_interactive.sh          # Camera 检测交互启动脚本
-│   └── camera_interactive.py          # Camera 检测交互控制
-└── src/
-    ├── robograsp_interfaces/          # 自定义 ROS2 消息/服务接口
-    │   ├── msg/
-    │       │   ├── PerceptionResult.msg   # 感知结果
-    │   │   └── ObjectInfo.msg         # 物体信息（桥接输出）
-    │
-    ├── robograsp_vision_perception/   # 感知层
-    │   ├── perception_node.cpp        # 主感知节点
-    │   ├── camera_detector.cpp        # 相机颜色阈值检测器
-    │   ├── detector.hpp               # 检测器抽象基类
-    │   └── config/
-    │       └── perception_params.yaml
-    │
-    ├── robograsp_vision_bridge/       # 机器人桥接层
-    │   ├── bridge_node.cpp            # 桥接节点
-    │   ├── piper_control_interface.cpp # Piper 控制接口
-    │   ├── robot_interface.hpp        # 机器人接口抽象
-    │   └── config/
-    │       └── bridge_params.yaml
-    │
-    └── robograsp_vision_bringup/      # 启动与配置
-        ├── launch/
-        │   ├── demo.launch.py         # 完整启动文件
-        │   └── mvp_demo.launch.py     # MVP 最小启动
-        └── config/
-            ├── system_params.yaml     # 系统级参数
-            ├── camera_params.yaml     # 相机参数预设
-            └── object_classes.yaml    # 物体类别配置
-```
 
 ## 系统架构
 
@@ -152,6 +114,18 @@ ros2 run rqt_graph rqt_graph
 1. 实现 `RobotInterface` 子类（参见 `robot_interface.hpp`）
 2. 在 `bridge_node.cpp` 中注册新的 backend 名称
 
-## 许可证
+## 更新日志
+
+### 2026-05-30
+
+- 新增深度几何检测器，基于高度图分割与形状分析，无需颜色先验
+- 新增检测后端可插拔切换（`color_threshold` / `depth_geometry`）
+- 新增 HSV 颜色阈值参数化配置
+- 修复 `perception_node` 共享库链接失败
+- 优化 3D 定位精度，改用轮廓内深度中位数替代单像素反投影
+- 修复物体底面位置计算偏差
+- 精简 bridge 包依赖
+
+- 由于HSV-D的检测方法对于圆柱检测困难，目前只有box物体位置相对稳定，后续会针对补足
 
 MIT

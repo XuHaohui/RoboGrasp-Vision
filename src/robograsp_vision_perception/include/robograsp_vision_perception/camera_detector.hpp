@@ -88,6 +88,15 @@ private:
       const cv::Scalar & lower2, const cv::Scalar & upper2,
       const std::string & object_class,
       const sensor_msgs::msg::CameraInfo & cinfo);
+
+  cv::Scalar hsv_cube_lower1_;
+  cv::Scalar hsv_cube_upper1_;
+  cv::Scalar hsv_cube_lower2_;
+  cv::Scalar hsv_cube_upper2_;
+  cv::Scalar hsv_cylinder_lower_;
+  cv::Scalar hsv_cylinder_upper_;
+  cv::Scalar hsv_box_lower_;
+  cv::Scalar hsv_box_upper_;
 };
 
 }  // namespace robograsp_vision_perception

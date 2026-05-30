@@ -1,10 +1,8 @@
 #pragma once
 
 #include "robograsp_interfaces/msg/perception_result.hpp"
-#include "robograsp_interfaces/msg/object_info.hpp"
 
 #include <memory>
-#include <string>
 
 namespace robograsp_vision_bridge
 {

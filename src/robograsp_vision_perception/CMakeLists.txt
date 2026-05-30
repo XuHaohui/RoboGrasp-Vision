@@ -22,6 +22,7 @@ find_package(geometry_msgs REQUIRED)
 # camera_detector library
 add_library(camera_detector SHARED
   src/camera_detector.cpp
+  src/depth_geometry_detector.cpp
 )
 target_include_directories(camera_detector PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -41,16 +42,20 @@ target_link_libraries(perception_node camera_detector)
 ament_target_dependencies(perception_node rclcpp robograsp_interfaces geometry_msgs std_msgs tf2 tf2_ros tf2_geometry_msgs)
 
 # install targets
-install(TARGETS
-  camera_detector
-  perception_node
-  DESTINATION lib/${PROJECT_NAME}
+install(TARGETS camera_detector
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
+install(TARGETS perception_node
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
 # install headers
 install(DIRECTORY include/
   DESTINATION include
 )
+
+ament_export_libraries(camera_detector)
 
 # install config
 install(DIRECTORY config

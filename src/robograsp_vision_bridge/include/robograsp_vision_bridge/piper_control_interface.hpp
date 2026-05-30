@@ -2,6 +2,7 @@
 
 #include "robograsp_vision_bridge/robot_interface.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "robograsp_interfaces/msg/object_info.hpp"
 
 #include <memory>
 #include <string>

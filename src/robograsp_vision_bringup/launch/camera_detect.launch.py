@@ -24,6 +24,9 @@ def generate_launch_description():
             "auto_publish": False,
             "sensor_frame": "camera_depth_optical_frame",
             "publish_rate": 5.0,
+            "detector_backend": "depth_geometry",
+            "hsv.cylinder.lower": [20, 50, 40],
+            "hsv.cylinder.upper": [40, 255, 255],
         }],
     )
 

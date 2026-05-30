@@ -145,25 +145,43 @@ std::vector<DetectionResult> CameraDetector::detect_all()
 ColorThresholdDetector::ColorThresholdDetector(rclcpp::Node * node)
   : CameraDetector(node)
 {
+  auto load_hsv = [this](const std::string & name,
+                          const std::vector<int64_t> & defaults,
+                          cv::Scalar & scalar) {
+    node_->declare_parameter(name, defaults);
+    auto v = node_->get_parameter(name).as_integer_array();
+    scalar = cv::Scalar(static_cast<double>(v[0]),
+                        static_cast<double>(v[1]),
+                        static_cast<double>(v[2]));
+  };
+
+  load_hsv("hsv.cube.lower1",   {0,   150, 40}, hsv_cube_lower1_);
+  load_hsv("hsv.cube.upper1",   {10,  255, 255}, hsv_cube_upper1_);
+  load_hsv("hsv.cube.lower2",   {170, 150, 40}, hsv_cube_lower2_);
+  load_hsv("hsv.cube.upper2",   {180, 255, 255}, hsv_cube_upper2_);
+  load_hsv("hsv.cylinder.lower", {35,  40,  40}, hsv_cylinder_lower_);
+  load_hsv("hsv.cylinder.upper", {85,  255, 255}, hsv_cylinder_upper_);
+  load_hsv("hsv.box.lower",      {100, 60,  40}, hsv_box_lower_);
+  load_hsv("hsv.box.upper",      {140, 255, 255}, hsv_box_upper_);
 }
 
 DetectionResult ColorThresholdDetector::detect_impl(
     const cv::Mat & hsv, const cv::Mat & depth,
     const sensor_msgs::msg::CameraInfo & cinfo)
 {
-  auto r = detect_color_dual(hsv, depth,
-    cv::Scalar(0, 180, 120), cv::Scalar(10, 255, 255),
-    cv::Scalar(170, 180, 120), cv::Scalar(180, 255, 255),
+  auto   r = detect_color_dual(hsv, depth,
+    hsv_cube_lower1_, hsv_cube_upper1_,
+    hsv_cube_lower2_, hsv_cube_upper2_,
     "cube", cinfo);
   if (r.detected) return r;
 
   r = detect_color(hsv, depth,
-    cv::Scalar(40, 80, 60), cv::Scalar(80, 255, 255),
+    hsv_cylinder_lower_, hsv_cylinder_upper_,
     "cylinder", cinfo);
   if (r.detected) return r;
 
   r = detect_color(hsv, depth,
-    cv::Scalar(110, 140, 80), cv::Scalar(130, 255, 255),
+    hsv_box_lower_, hsv_box_upper_,
     "box", cinfo);
   if (r.detected) return r;
 
@@ -211,32 +229,41 @@ DetectionResult ColorThresholdDetector::detect_from_mask(
   result.bbox_2d = {static_cast<float>(bbox.x), static_cast<float>(bbox.y),
                     static_cast<float>(bbox.width), static_cast<float>(bbox.height)};
 
-  // Collect valid depth samples inside the contour (surface)
-  std::vector<float> surface_depths;
-  surface_depths.reserve((bbox.area() + 3) / 4);
+  // Collect 3D points from all valid pixels inside the contour
+  std::vector<float> xs, ys, zs;
+  size_t reserve_size = (bbox.area() + 3) / 4;
+  xs.reserve(reserve_size);
+  ys.reserve(reserve_size);
+  zs.reserve(reserve_size);
   for (int row = bbox.y; row < bbox.y + bbox.height; row += 2) {
     for (int col = bbox.x; col < bbox.x + bbox.width; col += 2) {
       if (row < 0 || row >= depth.rows || col < 0 || col >= depth.cols) continue;
       if (mask.at<uchar>(row, col) == 0) continue;
       float d = depth.at<float>(row, col);
       if (d > 0.0f && !std::isnan(d) && !std::isinf(d)) {
-        surface_depths.push_back(d);
+        xs.push_back(-(static_cast<float>(col) - cx) * d / fx);
+        ys.push_back( (static_cast<float>(row) - cy) * d / fy);
+        zs.push_back(d);
       }
     }
   }
 
-  // Median surface depth (more robust than single-pixel centroid)
-  float surface_depth = depth_val;
-  if (!surface_depths.empty()) {
-    std::nth_element(surface_depths.begin(),
-                     surface_depths.begin() + surface_depths.size() / 2,
-                     surface_depths.end());
-    surface_depth = surface_depths[surface_depths.size() / 2];
+  if (zs.empty()) {
+    result.position_3d.x = -(u - cx) * depth_val / fx;
+    result.position_3d.y = (v - cy) * depth_val / fy;
+    result.position_3d.z = depth_val;
+  } else {
+    auto median = [](std::vector<float> & vec) {
+      size_t n = vec.size() / 2;
+      std::nth_element(vec.begin(), vec.begin() + n, vec.end());
+      return vec[n];
+    };
+    result.position_3d.x = median(xs);
+    result.position_3d.y = median(ys);
+    result.position_3d.z = median(zs);
   }
 
-  result.position_3d.x = -(u - cx) * surface_depth / fx;
-  result.position_3d.y = (v - cy) * surface_depth / fy;
-  result.position_3d.z = surface_depth;
+  float surface_depth = (zs.empty()) ? depth_val : result.position_3d.z;
   result.confidence = std::min(1.0f, static_cast<float>(area) / 500.0f);
 
   RCLCPP_INFO(node_->get_logger(),
@@ -291,7 +318,7 @@ DetectionResult ColorThresholdDetector::detect_from_mask(
     object_class.c_str(),
     width_3d, extent_y_3d, object_height,
     bbox.width, bbox.height,
-    static_cast<int>(surface_depths.size()),
+    static_cast<int>(zs.size()),
     static_cast<int>(bg_depths.size()));
 
   result.detected = true;
@@ -331,18 +358,18 @@ std::vector<DetectionResult> ColorThresholdDetector::detect_all_impl(
   std::vector<DetectionResult> results;
 
   auto r = detect_color_dual(hsv, depth,
-    cv::Scalar(0, 180, 120), cv::Scalar(10, 255, 255),
-    cv::Scalar(170, 180, 120), cv::Scalar(180, 255, 255),
+    hsv_cube_lower1_, hsv_cube_upper1_,
+    hsv_cube_lower2_, hsv_cube_upper2_,
     "cube", cinfo);
   if (r.detected) results.push_back(r);
 
   r = detect_color(hsv, depth,
-    cv::Scalar(40, 80, 60), cv::Scalar(80, 255, 255),
+    hsv_cylinder_lower_, hsv_cylinder_upper_,
     "cylinder", cinfo);
   if (r.detected) results.push_back(r);
 
   r = detect_color(hsv, depth,
-    cv::Scalar(110, 140, 80), cv::Scalar(130, 255, 255),
+    hsv_box_lower_, hsv_box_upper_,
     "box", cinfo);
   if (r.detected) results.push_back(r);
 
